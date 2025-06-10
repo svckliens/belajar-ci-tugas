@@ -37,6 +37,13 @@ class ProductSeeder extends Seeder
                 'jumlah' => 3,
                 'foto' => '4.jpg',
                 'created_at' => date("Y-m-d H:i:s"),
+            ],
+             [
+                'nama' => 'Tang',
+                'harga'  => 30000,
+                'jumlah' => 7,
+                'foto' => '5.jpg',
+                'created_at' => date("Y-m-d H:i:s"),
             ]
         ];
 
