@@ -16,113 +16,97 @@ class ApiController extends ResourceController
     protected $transaction;
     protected $transaction_detail;
 
-        function __construct()
-        {
-            $this->apiKey = env('API_KEY');
-            $this->user = new UserModel();
-            $this->transaction = new TransactionModel();
-            $this->transaction_detail = new TransactionDetailModel();
-        }
+    public function __construct()
+    {
+        $this->apiKey = env('API_KEY');
+        $this->user = new UserModel();
+        $this->transaction = new TransactionModel();
+        $this->transaction_detail = new TransactionDetailModel();
+    }
+
     /**
-     * Return an array of resource objects, themselves in array format.
-     *
-     * @return ResponseInterface
+     * Endpoint API untuk mengambil seluruh transaksi dengan detail
      */
     public function index()
-{
-    $data = [ 
-        'results' => [],
-        'status' => ["code" => 401, "description" => "Unauthorized"]
-    ];
+    {
+        $data = [ 
+            'results' => [],
+            'status' => ["code" => 401, "description" => "Unauthorized"]
+        ];
 
-    $headers = $this->request->headers(); 
+        $headers = $this->request->headers();
 
-    array_walk($headers, function (&$value, $key) {
-        $value = $value->getValue();
-    });
+        // Ubah header jadi array sederhana
+        array_walk($headers, function (&$value, $key) {
+            $value = $value->getValue();
+        });
 
-    if(array_key_exists("Key", $headers)){
-        if ($headers["Key"] == $this->apiKey) {
-            $penjualan = $this->transaction->findAll();
-            
-            foreach ($penjualan as &$pj) {
-                $pj['details'] = $this->transaction_detail->where('transaction_id', $pj['id'])->findAll();
+        if (array_key_exists("Key", $headers)) {
+            if ($headers["Key"] == $this->apiKey) {
+                $penjualan = $this->transaction->findAll();
+                
+                foreach ($penjualan as &$pj) {
+                $details = $this->transaction_detail
+                    ->where('transaction_id', $pj['id'])
+                    ->findAll();
+
+                $pj['details'] = $details;
+
+                // Hitung total item dalam transaksi
+                $jumlah_item = 0;
+                foreach ($details as $d) {
+                    $jumlah_item += $d['jumlah'];
+                }
+
+                $pj['jumlah_item'] = $jumlah_item; // Tambahkan ke response
             }
 
-            $data['status'] = ["code" => 200, "description" => "OK"];
-            $data['results'] = $penjualan;
+                $pj['status'] = ($pj['status'] == 'selesai') ? 'Sudah Selesai' : 'Belum Selesai';
 
-        }
-    } 
+                $data['results'] = $penjualan;
+            }
+        } 
 
-    return $this->respond($data);
+        return $this->respond($data);
+    }
+
+    /**
+     * Halaman user (non-API) untuk menampilkan profil dan riwayat pembelian
+     */
+    public function profilIndex()
+{
+    helper('number');
+
+    $username = session()->get('username');
+
+    if (!$username) {
+        return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu.');
+    }
+
+    $buy = $this->transaction
+        ->where('username', $username)
+        ->orderBy('created_at', 'DESC')
+        ->findAll();
+
+    $db = \Config\Database::connect(); // akses database
+
+    $product = [];
+
+    foreach ($buy as $row) {
+        $query = $db->table('transaction_detail td')
+            ->select('td.*, p.nama, p.harga, p.foto')
+            ->join('product p', 'p.id = td.product_id')
+            ->where('td.transaction_id', $row['id'])
+            ->get();
+
+        $product[$row['id']] = $query->getResultArray();
+    }
+
+    return view('v_profil', [
+        'username' => $username,
+        'buy' => $buy,
+        'product' => $product
+    ]);
 }
 
-    /**
-     * Return the properties of a resource object.
-     *
-     * @param int|string|null $id
-     *
-     * @return ResponseInterface
-     */
-    public function show($id = null)
-    {
-        //
-    }
-
-    /**
-     * Return a new resource object, with default properties.
-     *
-     * @return ResponseInterface
-     */
-    public function new()
-    {
-        //
-    }
-
-    /**
-     * Create a new resource object, from "posted" parameters.
-     *
-     * @return ResponseInterface
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Return the editable properties of a resource object.
-     *
-     * @param int|string|null $id
-     *
-     * @return ResponseInterface
-     */
-    public function edit($id = null)
-    {
-        //
-    }
-
-    /**
-     * Add or update a model resource, from "posted" properties.
-     *
-     * @param int|string|null $id
-     *
-     * @return ResponseInterface
-     */
-    public function update($id = null)
-    {
-        //
-    }
-
-    /**
-     * Delete the designated resource object from the model.
-     *
-     * @param int|string|null $id
-     *
-     * @return ResponseInterface
-     */
-    public function delete($id = null)
-    {
-        //
-    }
 }

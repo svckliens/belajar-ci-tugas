@@ -31,18 +31,28 @@ class TransaksiController extends BaseController
         return view('v_keranjang', $data);
     }
 
-    public function cart_add()
-    {
-        $this->cart->insert(array(
-            'id'        => $this->request->getPost('id'),
-            'qty'       => 1,
-            'price'     => $this->request->getPost('harga'),
-            'name'      => $this->request->getPost('nama'),
-            'options'   => array('foto' => $this->request->getPost('foto'))
-        ));
-        session()->setflashdata('success', 'Produk berhasil ditambahkan ke keranjang. (<a href="' . base_url() . 'keranjang">Lihat</a>)');
-        return redirect()->to(base_url('/'));
-    }
+     public function cart_add()
+{
+    $diskon = session()->get('diskon_nominal') ?? 0;
+
+    $harga_asli = $this->request->getPost('harga');
+    $harga_setelah_diskon = max($harga_asli - $diskon, 0);
+
+    $this->cart->insert([
+        'id'      => $this->request->getPost('id'),
+        'qty'     => 1,
+        'price'   => $harga_setelah_diskon,
+        'name'    => $this->request->getPost('nama'),
+        'options' => [
+            'foto' => $this->request->getPost('foto'),
+            'original_price' => $harga_asli,
+            'diskon' => $diskon
+        ]
+    ]);
+
+    session()->setFlashdata('success', 'Produk berhasil ditambahkan ke keranjang. (<a href="' . base_url() . 'keranjang">Lihat</a>)');
+    return redirect()->to(base_url('/'));
+}
 
     public function cart_clear()
     {

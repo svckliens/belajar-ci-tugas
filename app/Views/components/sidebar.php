@@ -33,6 +33,14 @@
                     <span>Produk</span>
                 </a>
             </li><!-- End Produk Nav -->
+             <?php if (session()->get('role') === 'admin') : ?>
+            <li class="nav-item">
+                <a class="nav-link" href="<?= base_url('diskon') ?>">
+                    <i class="bi bi-percent"></i>
+                    <span>Diskon</span>
+                </a>
+            </li>
+            <?php endif; ?>
         <?php
         }
         ?>

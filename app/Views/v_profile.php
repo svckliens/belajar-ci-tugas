@@ -1,7 +1,9 @@
 <?= $this->extend('layout') ?>
 <?= $this->section('content') ?>
-History Transaksi Pembelian <strong><?= $username ?></strong>
+
+<h3>History Transaksi Pembelian <strong><?= $username ?></strong></h3>
 <hr>
+
 <div class="table-responsive">
     <!-- Table with stripped rows -->
     <table class="table datatable">
@@ -11,9 +13,10 @@ History Transaksi Pembelian <strong><?= $username ?></strong>
                 <th scope="col">ID Pembelian</th>
                 <th scope="col">Waktu Pembelian</th>
                 <th scope="col">Total Bayar</th>
+                <th scope="col">Ongkir</th>
                 <th scope="col">Alamat</th>
                 <th scope="col">Status</th>
-                <th scope="col"></th>
+                <th scope="col">Aksi</th>
             </tr>
         </thead>
         <tbody>
@@ -25,8 +28,10 @@ History Transaksi Pembelian <strong><?= $username ?></strong>
                         <th scope="row"><?php echo $index + 1 ?></th>
                         <td><?php echo $item['id'] ?></td>
                         <td><?php echo $item['created_at'] ?></td>
-                        <td><?php echo number_to_currency($item['total_harga'], 'IDR') ?></td>
+                        <td><?php echo number_to_currency($item['total_harga'], 'IDR', 'id_ID') ?></td>
+                        <td><?php echo number_to_currency($item['ongkir'], 'IDR') ?></td>
                         <td><?php echo $item['alamat'] ?></td>
+
                         <td><?php echo ($item['status'] == "1") ? "Sudah Selesai" : "Belum Selesai" ?></td>
                         <td>
                             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#detailModal-<?= $item['id'] ?>">
@@ -34,6 +39,7 @@ History Transaksi Pembelian <strong><?= $username ?></strong>
                             </button>
                         </td>
                     </tr>
+
                     <!-- Detail Modal Begin -->
                     <div class="modal fade" id="detailModal-<?= $item['id'] ?>" tabindex="-1">
                         <div class="modal-dialog modal-dialog-centered">
@@ -46,9 +52,11 @@ History Transaksi Pembelian <strong><?= $username ?></strong>
                                     <?php 
                                     if(!empty($product)){
 	                                    foreach ($product[$item['id']] as $index2 => $item2) : ?>
-	                                        <?php echo $index2 + 1 . ")" ?>
+                                        <div class="mb-3">
+	                                        <strong><?= ($index2 + 1) . ") " . esc($item2['nama'] ?? 'Produk tidak dikenal') ?></strong><br>
 	                                        <?php if ($item2['foto'] != '' and file_exists("img/" . $item2['foto'] . "")) : ?>
 	                                            <img src="<?php echo base_url() . "img/" . $item2['foto'] ?>" width="100px">
+                                                
 	                                        <?php endif; ?>
 	                                        <strong><?= $item2['nama'] ?></strong>
 	                                        <?= number_to_currency($item2['harga'], 'IDR') ?>
@@ -66,10 +74,12 @@ History Transaksi Pembelian <strong><?= $username ?></strong>
                         </div>
                     </div>
                     <!-- Detail Modal End -->
-            <?php
-                endforeach;
-            endif;
-            ?>
+            <?php endforeach; ?>
+            <?php else : ?>
+                <tr>
+                    <td colspan="7" class="text-center">Belum ada transaksi.</td>
+                </tr>
+            <?php endif; ?>
         </tbody>
     </table>
     <!-- End Table with stripped rows -->

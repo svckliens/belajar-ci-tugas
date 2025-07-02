@@ -39,6 +39,17 @@ class AuthController extends BaseController
                         'isLoggedIn' => TRUE
                     ]);
 
+                    // Tambahkan logika diskon hari ini
+                    $diskonModel = new \App\Models\DiskonModel();
+                    $today = date('Y-m-d');
+                    $diskon = $diskonModel->where('tanggal', $today)->first();
+
+                    if ($diskon) {
+                        session()->set('diskon_nominal', $diskon['nominal']);
+                    } else {
+                        session()->remove('diskon_nominal');
+                    }
+
                     return redirect()->to(base_url('/'));
                 } else {
                     session()->setFlashdata('failed', 'Kombinasi Username & Password Salah');
